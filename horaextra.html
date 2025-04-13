@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Salário por Hora</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Arial', sans-serif;
+        }
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            font-weight: bold;
+            background-color: #0d6efd;
+            color: white;
+        }
+        .btn {
+            margin-right: 5px;
+        }
+        .table {
+            margin-top: 15px;
+        }
+        #valor_hora, #total_horas, #total_receber {
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        #total_receber {
+            color: #198754;
+            font-size: 1.1em;
+        }
+        .form-control, .form-select {
+            max-width: 200px;
+        }
+        .btn-apagar {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+        .input-horario {
+            max-width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="text-center mb-4">Calculadora de Hora Extra</h1>
+        
+        <!-- Seção de Configuração -->
+        <div class="card mb-4">
+            <div class="card-header">
+                Configuração Salarial
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="salario_mensal" class="form-label">Salário Mensal (R$):</label>
+                            <input type="text" class="form-control" id="salario_mensal" placeholder="Ex: 2200,00">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="percentual_adicional" class="form-label">Adicional Hora Extra (%):</label>
+                            <select class="form-select" id="percentual_adicional">
+                                <option value="50">50%</option>
+                                <option value="100">100%</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button id="btn_calcular_valor" class="btn btn-success">Calcular Valor Hora</button>
+                <div class="mt-3">
+                    <strong>Valor por Hora:</strong> <span id="valor_hora">R$ 0,00</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Seção de Registro -->
+        <div class="card mb-4">
+            <div class="card-header">
+                Registro de Horas
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="dia" class="form-label">Dia (1-31):</label>
+                            <input type="number" class="form-control" id="dia" min="1" max="31">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="entrada" class="form-label">Entrada (HH:MM):</label>
+                            <input type="text" class="form-control input-horario" id="entrada" placeholder="08:00">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="saida" class="form-label">Saída (HH:MM):</label>
+                            <input type="text" class="form-control input-horario" id="saida" placeholder="17:00">
+                        </div>
+                    </div>
+                </div>
+                <button id="btn_adicionar" class="btn btn-primary">Adicionar Dia</button>
+                <button id="btn_limpar" class="btn btn-warning">Limpar Campos</button>
+            </div>
+        </div>
+        
+        <!-- Seção de Resumo -->
+        <div class="card mb-4">
+            <div class="card-header">
+                Resumo
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <strong>Total de Horas:</strong> <span id="total_horas">00:00</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <strong>Total a Receber:</strong> <span id="total_receber">R$ 0,00</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <button id="btn_gerar_relatorio" class="btn btn-info">Gerar Relatório</button>
+                        <button id="btn_limpar_tudo" class="btn btn-danger">Limpar Tudo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabela de Registros -->
+        <div class="card">
+            <div class="card-header">
+                Registros
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Dia</th>
+                                <th>Entrada</th>
+                                <th>Saída</th>
+                                <th>Horas</th>
+                                <th>Valor (R$)</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela_registros">
+                            <!-- Registros serão inseridos aqui via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Variáveis globais
+            let valorHora = 0;
+            let registros = JSON.parse(localStorage.getItem('registros_salario')) || [];
+            
+            // Elementos DOM
+            const salarioMensalInput = document.getElementById('salario_mensal');
+            const percentualAdicionalSelect = document.getElementById('percentual_adicional');
+            const valorHoraSpan = document.getElementById('valor_hora');
+            const diaInput = document.getElementById('dia');
+            const entradaInput = document.getElementById('entrada');
+            const saidaInput = document.getElementById('saida');
+            const totalHorasSpan = document.getElementById('total_horas');
+            const totalReceberSpan = document.getElementById('total_receber');
+            const tabelaRegistros = document.getElementById('tabela_registros');
+            
+            // Botões
+            const btnCalcularValor = document.getElementById('btn_calcular_valor');
+            const btnAdicionar = document.getElementById('btn_adicionar');
+            const btnLimpar = document.getElementById('btn_limpar');
+            const btnGerarRelatorio = document.getElementById('btn_gerar_relatorio');
+            const btnLimparTudo = document.getElementById('btn_limpar_tudo');
+            
+            // Formatação de horário automática
+            entradaInput.addEventListener('input', formatarHorario);
+            saidaInput.addEventListener('input', formatarHorario);
+            
+            // Event Listeners
+            btnCalcularValor.addEventListener('click', calcularValorHora);
+            btnAdicionar.addEventListener('click', adicionarRegistro);
+            btnLimpar.addEventListener('click', limparCampos);
+            btnGerarRelatorio.addEventListener('click', gerarRelatorio);
+            btnLimparTudo.addEventListener('click', limparTudo);
+            
+            // Carregar registros ao iniciar
+            carregarRegistros();
+            
+            // Funções
+            function formatarHorario(e) {
+                const input = e.target;
+                let value = input.value.replace(/\D/g, '');
+                
+                if (value.length > 2) {
+                    value = value.substring(0, 2) + ':' + value.substring(2, 4);
+                }
+                
+                input.value = value;
+            }
+            
+            function formatarMoeda(valor) {
+                return valor.toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                });
+            }
+            
+            function calcularValorHora() {
+                const salarioMensal = salarioMensalInput.value.trim().replace('.', '').replace(',', '.');
+                
+                if (!salarioMensal || isNaN(salarioMensal)) {
+                    alert('Informe um salário válido!');
+                    return;
+                }
+                
+                const salario = parseFloat(salarioMensal);
+                
+                if (salario <= 0) {
+                    alert('Salário deve ser positivo!');
+                    return;
+                }
+                
+                valorHora = salario / 220;
+                valorHora = Math.round(valorHora * 100) / 100; // Arredonda para 2 casas
+                
+                valorHoraSpan.textContent = formatarMoeda(valorHora);
+                alert(`Valor por hora calculado: ${formatarMoeda(valorHora)}`);
+            }
+            
+            function calcularHorasTrabalhadas(entrada, saida) {
+                const [horaEntrada, minutoEntrada] = entrada.split(':').map(Number);
+                const [horaSaida, minutoSaida] = saida.split(':').map(Number);
+                
+                const totalMinutosEntrada = horaEntrada * 60 + minutoEntrada;
+                const totalMinutosSaida = horaSaida * 60 + minutoSaida;
+                
+                if (totalMinutosSaida <= totalMinutosEntrada) {
+                    throw new Error("Horário de saída deve ser após a entrada!");
+                }
+                
+                const diferencaMinutos = totalMinutosSaida - totalMinutosEntrada;
+                const horas = Math.floor(diferencaMinutos / 60);
+                const minutos = diferencaMinutos % 60;
+                
+                return horas + (minutos / 60);
+            }
+            
+            function formatarHorasDecimais(horas) {
+                const horasInt = Math.floor(horas);
+                const minutos = Math.round((horas - horasInt) * 60);
+                return `${horasInt}:${minutos.toString().padStart(2, '0')}`;
+            }
+            
+            function adicionarRegistro() {
+                try {
+                    const dia = diaInput.value.trim();
+                    const entrada = entradaInput.value.trim();
+                    const saida = saidaInput.value.trim();
+                    const percentual = parseFloat(percentualAdicionalSelect.value);
+                    
+                    // Validações
+                    if (!dia || !entrada || !saida) {
+                        throw new Error("Preencha todos os campos!");
+                    }
+                    
+                    if (valorHora <= 0) {
+                        throw new Error("Calcule o valor por hora primeiro!");
+                    }
+                    
+                    if (!/^\d{1,2}$/.test(dia) || parseInt(dia) < 1 || parseInt(dia) > 31) {
+                        throw new Error("Dia inválido! Use um valor entre 1 e 31");
+                    }
+                    
+                    if (!/^\d{2}:\d{2}$/.test(entrada) || !/^\d{2}:\d{2}$/.test(saida)) {
+                        throw new Error("Horários devem estar no formato HH:MM");
+                    }
+                    
+                    // Cálculos
+                    const horasTrabalhadas = calcularHorasTrabalhadas(entrada, saida);
+                    const horasNormais = Math.min(8, horasTrabalhadas);
+                    const horasExtras = Math.max(0, horasTrabalhadas - 8);
+                    
+                    const valorNormal = horasNormais * valorHora;
+                    const valorExtra = horasExtras * valorHora * (1 + percentual/100);
+                    const valorTotal = Math.round((valorNormal + valorExtra) * 100) / 100;
+                    
+                    const dataAtual = new Date();
+                    const diaCompleto = `${dia.padStart(2, '0')}/${(dataAtual.getMonth()+1).toString().padStart(2, '0')}/${dataAtual.getFullYear()}`;
+                    const horasFormatadas = formatarHorasDecimais(horasTrabalhadas);
+                    
+                    // Adicionar registro
+                    const novoRegistro = {
+                        id: Date.now(),
+                        dia: diaCompleto,
+                        entrada: entrada,
+                        saida: saida,
+                        horas: horasFormatadas,
+                        valor: valorTotal
+                    };
+                    
+                    registros.push(novoRegistro);
+                    salvarRegistros();
+                    
+                    alert(`Registro adicionado!\nValor: ${formatarMoeda(valorTotal)}`);
+                    limparCampos();
+                    carregarRegistros();
+                } catch (error) {
+                    alert(error.message);
+                }
+            }
+            
+            function carregarRegistros() {
+                tabelaRegistros.innerHTML = '';
+                
+                if (registros.length === 0) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = '<td colspan="6" class="text-center">Nenhum registro encontrado</td>';
+                    tabelaRegistros.appendChild(row);
+                    totalHorasSpan.textContent = '00:00';
+                    totalReceberSpan.textContent = 'R$ 0,00';
+                    return;
+                }
+                
+                let totalHoras = 0;
+                let totalValor = 0;
+                
+                registros.forEach(reg => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${reg.dia}</td>
+                        <td>${reg.entrada}</td>
+                        <td>${reg.saida}</td>
+                        <td>${reg.horas}</td>
+                        <td>${formatarMoeda(reg.valor)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger btn-apagar" data-id="${reg.id}">Apagar</button>
+                        </td>
+                    `;
+                    tabelaRegistros.appendChild(row);
+                    
+                    // Calcular totais
+                    const [h, m] = reg.horas.split(':').map(Number);
+                    totalHoras += h + m/60;
+                    totalValor += reg.valor;
+                });
+                
+                // Atualizar totais
+                totalHoras = Math.round(totalHoras * 100) / 100;
+                totalValor = Math.round(totalValor * 100) / 100;
+                
+                totalHorasSpan.textContent = formatarHorasDecimais(totalHoras);
+                totalReceberSpan.textContent = formatarMoeda(totalValor);
+                
+                // Adicionar eventos aos botões de apagar
+                document.querySelectorAll('.btn-apagar').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        apagarRegistro(id);
+                    });
+                });
+            }
+            
+            function apagarRegistro(id) {
+                if (!confirm('Deseja realmente apagar este registro?')) {
+                    return;
+                }
+                
+                registros = registros.filter(reg => reg.id !== id);
+                salvarRegistros();
+                alert('Registro apagado com sucesso!');
+                carregarRegistros();
+            }
+            
+            function limparCampos() {
+                diaInput.value = '';
+                entradaInput.value = '';
+                saidaInput.value = '';
+            }
+            
+            function limparTudo() {
+                if (!confirm('Deseja realmente apagar TODOS os registros?')) {
+                    return;
+                }
+                
+                registros = [];
+                salvarRegistros();
+                alert('Todos os registros foram apagados!');
+                carregarRegistros();
+            }
+            
+            function salvarRegistros() {
+                localStorage.setItem('registros_salario', JSON.stringify(registros));
+            }
+            
+            function gerarRelatorio() {
+                if (registros.length === 0) {
+                    alert('Nenhum registro para gerar relatório!');
+                    return;
+                }
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Cabeçalho
+                const dataAtual = new Date();
+                const mesAno = dataAtual.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
+                doc.setFontSize(16);
+                doc.text(`Relatório de Pagamento - ${mesAno}`, 105, 15, { align: 'center' });
+                
+                // Configurações
+                doc.setFontSize(12);
+                doc.text(`Salário Mensal: ${salarioMensalInput.value || 'Não informado'}`, 14, 25);
+                doc.text(`Valor por Hora: ${valorHoraSpan.textContent}`, 14, 30);
+                doc.text(`Adicional Hora Extra: ${percentualAdicionalSelect.value}%`, 14, 35);
+                
+                // Tabela
+                const headers = ['Dia', 'Entrada', 'Saída', 'Horas', 'Valor (R$)'];
+                const dados = registros.map(reg => [
+                    reg.dia,
+                    reg.entrada,
+                    reg.saida,
+                    reg.horas,
+                    formatarMoeda(reg.valor).replace('R$', '').trim()
+                ]);
+                
+                // Calcular totais
+                let totalHoras = 0;
+                let totalValor = 0;
+                
+                registros.forEach(reg => {
+                    const [h, m] = reg.horas.split(':').map(Number);
+                    totalHoras += h + m/60;
+                    totalValor += reg.valor;
+                });
+                
+                totalHoras = Math.round(totalHoras * 100) / 100;
+                totalValor = Math.round(totalValor * 100) / 100;
+                
+                // Adicionar linha de totais
+                dados.push([
+                    'TOTAL',
+                    '',
+                    '',
+                    formatarHorasDecimais(totalHoras),
+                    formatarMoeda(totalValor).replace('R$', '').trim()
+                ]);
+                
+                doc.autoTable({
+                    startY: 45,
+                    head: [headers],
+                    body: dados,
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [13, 110, 253] // Cor azul do Bootstrap
+                    },
+                    didDrawPage: function(data) {
+                        // Adicionar resumo após a tabela
+                        const finalY = data.cursor.y + 10;
+                        doc.text(`Total de Horas: ${formatarHorasDecimais(totalHoras)}`, 14, finalY);
+                        doc.text(`Total a Receber: ${formatarMoeda(totalValor)}`, 14, finalY + 5);
+                    }
+                });
+                
+                // Salvar PDF
+                const nomeArquivo = `relatorio_pagamento_${dataAtual.getFullYear()}${(dataAtual.getMonth()+1).toString().padStart(2, '0')}${dataAtual.getDate().toString().padStart(2, '0')}.pdf`;
+                doc.save(nomeArquivo);
+                
+                alert(`Relatório gerado: ${nomeArquivo}`);
+            }
+        });
+    </script>
+</body>
+</html>
