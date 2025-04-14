@@ -240,7 +240,7 @@
                 valorHora = Math.round(valorHora * 100) / 100; // Arredonda para 2 casas
                 
                 valorHoraSpan.textContent = formatarMoeda(valorHora);
-                alert(`Valor por hora calculado: ${formatarMoeda(valorHora)}`);
+                // Linha removida: alert(`Valor por hora calculado: ${formatarMoeda(valorHora)}`);
             }
             
             function calcularHorasTrabalhadas(entrada, saida) {
@@ -317,7 +317,7 @@
                     registros.push(novoRegistro);
                     salvarRegistros();
                     
-                    alert(`Registro adicionado!\nValor: ${formatarMoeda(valorTotal)}`);
+                    // Linha removida: alert(`Registro adicionado!\nValor: ${formatarMoeda(valorTotal)}`);
                     limparCampos();
                     carregarRegistros();
                 } catch (error) {
