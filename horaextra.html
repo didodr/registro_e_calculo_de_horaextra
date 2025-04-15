@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Hora Extra</title>
+    <title>Calculadora de Horas Extras</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -45,11 +45,15 @@
         .input-horario {
             max-width: 100px;
         }
+        .badge-ajuste {
+            font-size: 0.9em;
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="container mt-4">
-        <h1 class="text-center mb-4">Calculadora de Hora Extra</h1>
+        <h1 class="text-center mb-4">Calculadora de Horas Extras</h1>
         
         <!-- Seção de Configuração -->
         <div class="card mb-4">
@@ -61,12 +65,12 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="salario_mensal" class="form-label">Salário Mensal (R$):</label>
-                            <input type="text" class="form-control" id="salario_mensal" placeholder="Ex: 1518,00">
+                            <input type="text" class="form-control" id="salario_mensal" placeholder="Ex: 2200,00">
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label for="percentual_adicional" class="form-label">Adicional Hora Extra (%):</label>
+                            <label for="percentual_adicional" class="form-label">Adicional Hora Extra:</label>
                             <select class="form-select" id="percentual_adicional">
                                 <option value="50">50%</option>
                                 <option value="100">100%</option>
@@ -76,7 +80,9 @@
                 </div>
                 <button id="btn_calcular_valor" class="btn btn-success">Calcular Valor Hora</button>
                 <div class="mt-3">
-                    <strong>Valor por Hora:</strong> <span id="valor_hora">R$ 0,00</span>
+                    <strong>Valor por Hora:</strong> 
+                    <span id="valor_hora">R$ 0,00</span>
+                    <span id="badge_adicional" class="badge bg-info text-dark badge-ajuste">+0%</span>
                 </div>
             </div>
         </div>
@@ -97,13 +103,13 @@
                     <div class="col-md-4">
                         <div class="mb-3">
                             <label for="entrada" class="form-label">Entrada (HH:MM):</label>
-                            <input type="text" class="form-control input-horario" id="entrada" placeholder="07:10">
+                            <input type="text" class="form-control input-horario" id="entrada" placeholder="08:00">
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="mb-3">
                             <label for="saida" class="form-label">Saída (HH:MM):</label>
-                            <input type="text" class="form-control input-horario" id="saida" placeholder="17:30">
+                            <input type="text" class="form-control input-horario" id="saida" placeholder="17:00">
                         </div>
                     </div>
                 </div>
@@ -174,6 +180,7 @@
             const salarioMensalInput = document.getElementById('salario_mensal');
             const percentualAdicionalSelect = document.getElementById('percentual_adicional');
             const valorHoraSpan = document.getElementById('valor_hora');
+            const badgeAdicional = document.getElementById('badge_adicional');
             const diaInput = document.getElementById('dia');
             const entradaInput = document.getElementById('entrada');
             const saidaInput = document.getElementById('saida');
@@ -194,6 +201,7 @@
             
             // Event Listeners
             btnCalcularValor.addEventListener('click', calcularValorHora);
+            percentualAdicionalSelect.addEventListener('change', calcularValorHora);
             btnAdicionar.addEventListener('click', adicionarRegistro);
             btnLimpar.addEventListener('click', limparCampos);
             btnGerarRelatorio.addEventListener('click', gerarRelatorio);
@@ -223,6 +231,7 @@
             
             function calcularValorHora() {
                 const salarioMensal = salarioMensalInput.value.trim().replace('.', '').replace(',', '.');
+                const percentual = parseFloat(percentualAdicionalSelect.value);
                 
                 if (!salarioMensal || isNaN(salarioMensal)) {
                     alert('Informe um salário válido!');
@@ -236,11 +245,17 @@
                     return;
                 }
                 
-                valorHora = salario / 220;
-                valorHora = Math.round(valorHora * 100) / 100; // Arredonda para 2 casas
+                // Calcula o valor base por hora
+                const valorBase = salario / 220;
                 
+                // Aplica o percentual escolhido
+                valorHora = valorBase * (1 + percentual/100);
+                valorHora = Math.round(valorHora * 100) / 100;
+                
+                // Atualiza a exibição
                 valorHoraSpan.textContent = formatarMoeda(valorHora);
-                // Linha removida: alert(`Valor por hora calculado: ${formatarMoeda(valorHora)}`);
+                badgeAdicional.textContent = `+${percentual}%`;
+                badgeAdicional.className = `badge ${percentual === 50 ? 'bg-info' : 'bg-warning'} text-dark badge-ajuste`;
             }
             
             function calcularHorasTrabalhadas(entrada, saida) {
@@ -272,7 +287,6 @@
                     const dia = diaInput.value.trim();
                     const entrada = entradaInput.value.trim();
                     const saida = saidaInput.value.trim();
-                    const percentual = parseFloat(percentualAdicionalSelect.value);
                     
                     // Validações
                     if (!dia || !entrada || !saida) {
@@ -293,12 +307,7 @@
                     
                     // Cálculos
                     const horasTrabalhadas = calcularHorasTrabalhadas(entrada, saida);
-                    const horasNormais = Math.min(8, horasTrabalhadas);
-                    const horasExtras = Math.max(0, horasTrabalhadas - 8);
-                    
-                    const valorNormal = horasNormais * valorHora;
-                    const valorExtra = horasExtras * valorHora * (1 + percentual/100);
-                    const valorTotal = Math.round((valorNormal + valorExtra) * 100) / 100;
+                    const valorTotal = Math.round(horasTrabalhadas * valorHora * 100) / 100;
                     
                     const dataAtual = new Date();
                     const diaCompleto = `${dia.padStart(2, '0')}/${(dataAtual.getMonth()+1).toString().padStart(2, '0')}/${dataAtual.getFullYear()}`;
@@ -316,8 +325,6 @@
                     
                     registros.push(novoRegistro);
                     salvarRegistros();
-                    
-                    // Linha removida: alert(`Registro adicionado!\nValor: ${formatarMoeda(valorTotal)}`);
                     limparCampos();
                     carregarRegistros();
                 } catch (error) {
@@ -383,7 +390,6 @@
                 
                 registros = registros.filter(reg => reg.id !== id);
                 salvarRegistros();
-                alert('Registro apagado com sucesso!');
                 carregarRegistros();
             }
             
@@ -400,7 +406,6 @@
                 
                 registros = [];
                 salvarRegistros();
-                alert('Todos os registros foram apagados!');
                 carregarRegistros();
             }
             
@@ -417,20 +422,14 @@
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 
-                // Cabeçalho
+                // Cabeçalho simplificado
                 const dataAtual = new Date();
                 const mesAno = dataAtual.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
                 doc.setFontSize(16);
-                doc.text(`Relatório de Pagamento - ${mesAno}`, 105, 15, { align: 'center' });
+                doc.text(`Horas Extras - ${mesAno}`, 105, 15, { align: 'center' });
                 
-                // Configurações
-                doc.setFontSize(12);
-                doc.text(`Salário Mensal: ${salarioMensalInput.value || 'Não informado'}`, 14, 25);
-                doc.text(`Valor por Hora: ${valorHoraSpan.textContent}`, 14, 30);
-                doc.text(`Adicional Hora Extra: ${percentualAdicionalSelect.value}%`, 14, 35);
-                
-                // Tabela
-                const headers = ['Dia', 'Entrada', 'Saída', 'Horas', 'Valor (R$)'];
+                // Tabela com dados essenciais
+                const headers = ['Dia', 'Entrada', 'Saída', 'Horas', 'Valor'];
                 const dados = registros.map(reg => [
                     reg.dia,
                     reg.entrada,
@@ -462,26 +461,22 @@
                 ]);
                 
                 doc.autoTable({
-                    startY: 45,
+                    startY: 25,
                     head: [headers],
                     body: dados,
                     theme: 'grid',
                     headStyles: {
-                        fillColor: [13, 110, 253] // Cor azul do Bootstrap
+                        fillColor: [13, 110, 253]
                     },
-                    didDrawPage: function(data) {
-                        // Adicionar resumo após a tabela
-                        const finalY = data.cursor.y + 10;
-                        doc.text(`Total de Horas: ${formatarHorasDecimais(totalHoras)}`, 14, finalY);
-                        doc.text(`Total a Receber: ${formatarMoeda(totalValor)}`, 14, finalY + 5);
-                    }
+                    columnStyles: {
+                        4: { cellWidth: 25 }
+                    },
+                    margin: { top: 20 }
                 });
                 
                 // Salvar PDF
-                const nomeArquivo = `relatorio_pagamento_${dataAtual.getFullYear()}${(dataAtual.getMonth()+1).toString().padStart(2, '0')}${dataAtual.getDate().toString().padStart(2, '0')}.pdf`;
+                const nomeArquivo = `horas_extras_${mesAno.replace('/', '_')}.pdf`;
                 doc.save(nomeArquivo);
-                
-                alert(`Relatório gerado: ${nomeArquivo}`);
             }
         });
     </script>
